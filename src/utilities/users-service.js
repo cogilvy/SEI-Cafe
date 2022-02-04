@@ -1,26 +1,45 @@
 import * as usersAPI from './users-api';
 
 export async function signUp(userData) {
-  // Delegate the network request code to the users-api.js
-  // module which will ultimately return a JWT
-  const token = await usersAPI.signUp(userData);
-  localStorage.setItem('token', token);
-  return getUser();
+  try {
+    // Delegate the network request code to the users-api.js
+    // service module which will ultimately return a JWT
+    const token = await usersAPI.signUp(userData);
+    // Persist the "token"
+    localStorage.setItem('token', token);
+    return getUser();
+  } catch {
+    throw new Error('Invalid Sign Up');
+  }
 }
 
 export async function login(credentials) {
-  const token = await usersAPI.login(credentials);
-  localStorage.setItem('token', token);
-  return getUser();
+  try {
+    const token = await usersAPI.login(credentials);
+    localStorage.setItem('token', token);
+    return getUser();
+  } catch {
+    throw new Error('Bad Credentials');
+  }
+}
+
+export function logOut() {
+  localStorage.removeItem('token');
+}
+
+export function checkToken() {
+  return usersAPI.checkToken()
+    .then(dateStr => new Date(dateStr));
 }
 
 export function getToken() {
-  // getItem method will return null if there's no key
+  // getItem returns null if there's no string
   const token = localStorage.getItem('token');
   if (!token) return null;
-  const payload = JSON.parse(window.atob(token.split('.')[1]));
+  // Check if expired, remove if it is
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  // A JWT's exp is expressed in seconds, not milliseconds, so convert
   if (payload.exp < Date.now() / 1000) {
-    // Token has expired
     localStorage.removeItem('token');
     return null;
   }
@@ -29,16 +48,6 @@ export function getToken() {
 
 export function getUser() {
   const token = getToken();
-  return token ? JSON.parse(window.atob(token.split('.')[1])).user : null;
-}
-
-export function logOut() {
-  localStorage.removeItem('token');
-}
-
-/*-- This is not necessary in your MERN-Stack projects ---*/
-/*-- It's only to see how to send a token to the server ---*/
-export function checkToken() {
-  return usersAPI.checkToken()
-  .then(dateStr => new Date(dateStr));
+  // If there's a token, return the user in the payload, otherwise return null
+  return token ? JSON.parse(atob(token.split('.')[1])).user : null;
 }

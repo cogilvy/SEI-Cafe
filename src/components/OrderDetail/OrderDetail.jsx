@@ -9,8 +9,8 @@ export default function OrderDetail({ order, handleChangeQty, handleCheckout }) 
     <LineItem
       lineItem={item}
       isPaid={order.isPaid}
-      key={item._id}
       handleChangeQty={handleChangeQty}
+      key={item._id}
     />
   );
 
